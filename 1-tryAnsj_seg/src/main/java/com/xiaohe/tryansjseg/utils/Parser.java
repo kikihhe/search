@@ -65,6 +65,8 @@ public class Parser {
         // 递归所有文件夹，取出所有文件
         for (File file : files) {
 
+            
+            
             // 如果是文件夹.递归调用
             if (file.isDirectory()) {
                 enumFile(file.getAbsolutePath(), fileList);
