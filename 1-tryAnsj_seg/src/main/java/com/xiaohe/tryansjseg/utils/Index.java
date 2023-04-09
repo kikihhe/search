@@ -155,6 +155,7 @@ public class Index {
      */
     public static final String INDEX_PATH = "D:\\JAVA-projects\\search\\doc_searcher_index";
     public void save() throws IOException {
+        long start = System.currentTimeMillis();
         System.out.println("开始序列化索引");
         // 使用两个文件分别保存正排索引和倒排索引
         File indexPathFile = new File(INDEX_PATH);
@@ -167,6 +168,8 @@ public class Index {
         objectMapper.writeValue(forwardIndexFile, forwardIndex);
         objectMapper.writeValue(invertedIndexFile, invertedIndex);
         System.out.println("索引序列化完成");
+        long end = System.currentTimeMillis();
+        System.out.println("索引序列化花费时间: " + (end - start) / 1000 + "s");
     }
 
     /**
@@ -174,11 +177,16 @@ public class Index {
      * 把磁盘中的索引结构加载到内存里
      */
     public void load() throws IOException {
+        long start = System.currentTimeMillis();
+        System.out.println("开始反序列化索引");
         File forwardIndexFile = new File(INDEX_PATH + "\\forward.txt");
         File invertedIndexFile = new File(INDEX_PATH + "\\inverted.txt");
 
         // 开始加载
         forwardIndex = objectMapper.readValue(forwardIndexFile, new TypeReference<List<Doc>>() {});
         invertedIndex = objectMapper.readValue(invertedIndexFile, new TypeReference<HashMap<String, ArrayList<Weight>>>() {});
+        System.out.println("索引反序列化结束");
+        long end = System.currentTimeMillis();
+        System.out.println("索引反序列化消耗时间: " + (end - start) / 1000 + "s");
     }
 }
