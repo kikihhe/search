@@ -1,5 +1,7 @@
 package com.xiaohe.tryansjseg.utils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaohe.tryansjseg.domain.Doc;
 import com.xiaohe.tryansjseg.domain.Weight;
 import org.ansj.domain.Result;
@@ -7,6 +9,8 @@ import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
 
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -14,6 +18,7 @@ import java.util.*;
  */
 
 public class Index {
+    private ObjectMapper objectMapper = new ObjectMapper();
     // 正排索引
     // List 的下标对应着文档的id
     private List<Doc> forwardIndex = new ArrayList<>();
@@ -145,16 +150,35 @@ public class Index {
     }
 
     /**
-     * 把内存中的索引结构保存到磁盘中
+     * 序列化
+     * 把内存中的索引结构保存到磁盘中(json格式)
      */
-    public void save() {
+    public static final String INDEX_PATH = "D:\\JAVA-projects\\search\\doc_searcher_index";
+    public void save() throws IOException {
+        System.out.println("开始序列化索引");
+        // 使用两个文件分别保存正排索引和倒排索引
+        File indexPathFile = new File(INDEX_PATH);
+        if (!indexPathFile.exists()) {
+            indexPathFile.mkdirs();
+        }
 
+        File forwardIndexFile = new File(INDEX_PATH + "\\forward.txt");
+        File invertedIndexFile = new File(INDEX_PATH + "\\inverted.txt");
+        objectMapper.writeValue(forwardIndexFile, forwardIndex);
+        objectMapper.writeValue(invertedIndexFile, invertedIndex);
+        System.out.println("索引序列化完成");
     }
 
     /**
+     * 反序列化
      * 把磁盘中的索引结构加载到内存里
      */
-    public void load() {
+    public void load() throws IOException {
+        File forwardIndexFile = new File(INDEX_PATH + "\\forward.txt");
+        File invertedIndexFile = new File(INDEX_PATH + "\\inverted.txt");
 
+        // 开始加载
+        forwardIndex = objectMapper.readValue(forwardIndexFile, new TypeReference<List<Doc>>() {});
+        invertedIndex = objectMapper.readValue(invertedIndexFile, new TypeReference<HashMap<String, ArrayList<Weight>>>() {});
     }
 }
