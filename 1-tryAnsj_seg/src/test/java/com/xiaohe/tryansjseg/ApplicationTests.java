@@ -13,7 +13,7 @@ class ApplicationTests {
 
     @Test
     void contextLoads() {
-        String str = "小明是清华大学的学生,毕业后去美团工作，一单5.5元";
+        String str = "小明一把把车把把住了";
         Result parse = ToAnalysis.parse(str);
         System.out.println(parse);
         // term表示一个分词结果
