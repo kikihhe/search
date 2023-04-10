@@ -167,9 +167,8 @@ public class Index {
         File invertedIndexFile = new File(INDEX_PATH + "\\inverted.txt");
         objectMapper.writeValue(forwardIndexFile, forwardIndex);
         objectMapper.writeValue(invertedIndexFile, invertedIndex);
-        System.out.println("索引序列化完成");
         long end = System.currentTimeMillis();
-        System.out.println("索引序列化花费时间: " + (end - start) / 1000 + "s");
+        System.out.println("索引序列化完成,索引序列化花费时间: " + (end - start) / 1000 + "s, --->" + (end-start) + " ms");
     }
 
     /**

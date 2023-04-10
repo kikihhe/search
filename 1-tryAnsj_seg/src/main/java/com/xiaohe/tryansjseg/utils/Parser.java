@@ -1,6 +1,6 @@
 package com.xiaohe.tryansjseg.utils;
 
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -13,24 +13,36 @@ import java.util.ArrayList;
 @Component
 public class Parser {
     // 需要转换的文件名
-//    private static final String FILENAME = "D:\\tools\\jdk-20_doc-all\\docs\\api";
-//    @Value("{spring.file.path}")
     private static final String FILE_PATH = "D:\\tools\\jdk-20_doc-all\\docs\\api";
     private static final String PATH = "https://docs.oracle.com/javase/8/docs/api";
 
-    public void run() {
+    private Index index = new Index();
+
+    public void run() throws IOException {
+        long start = System.currentTimeMillis();
+        System.out.println("开始解析");
         // 加载api文件夹中的所有html文件
+        System.out.println("开始遍历文件");
+        long start2 = System.currentTimeMillis();
         ArrayList<File> files = new ArrayList<>();
         enumFile(FILE_PATH, files);
-
+        long end2 = System.currentTimeMillis();
+        System.out.println("文件遍历结束，花费时间: " + (end2 - start2));
         // 解析上述html文件
+
+        long start1 = System.currentTimeMillis();
+        System.out.println("开始制作索引");
         for (File file : files) {
             System.out.println("开始解析: " + file.getAbsolutePath());
             parseHTML(file);
         }
-        // 分词
-
+        long end1 = System.currentTimeMillis();
+        System.out.println("索引文件遍历结束，花费时间: " + (end1 - start1));
         // 存储
+        index.save();
+        long end = System.currentTimeMillis();
+        System.out.println("索引解析完毕，耗时: " + (end-start)/1000 + "s --->" + (end-start) + "ms");
+
     }
     // 解析html文件
     private void parseHTML(File file)  {
@@ -43,7 +55,8 @@ public class Parser {
         // 解析HTML的正文
         String content = parseContent(file);
 
-        // TODO 将这些title url content装入索引中。
+        // 将这些title url content装入索引中。
+        index.addDoc(title, url, content);
 
     }
 
@@ -140,7 +153,7 @@ public class Parser {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Parser parser = new Parser();
         parser.run();
     }
