@@ -65,6 +65,7 @@ public class DocSearch {
         // 分词
         List<Term> terms = ToAnalysis.parse(query).getTerms();
 
+
         // 查倒排
         List<Weight> list = new ArrayList<>();
         for (Term term : terms) {

@@ -1,6 +1,7 @@
 package com.xiaohe.tryansjseg.controller;
 
 import com.sun.istack.internal.NotNull;
+import com.xiaohe.tryansjseg.domain.Page;
 import com.xiaohe.tryansjseg.domain.SearchResult;
 import com.xiaohe.tryansjseg.utils.DocSearch;
 import com.xiaohe.tryansjseg.utils.Result;
@@ -23,13 +24,15 @@ public class SearchController {
 
     @Autowired
     private DocSearch docSearch;
+
     /**
      * 实现搜索功能
-     * @param query
+     * @param query 用户想要实现的搜索词
+     * @param page 分页
      * @return
      */
     @GetMapping("/search")
-    public Result search(String query) {
+    public Result search(String query, Page page) {
         if (Strings.isEmpty(query)) {
             return Result.success(null);
         }
