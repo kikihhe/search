@@ -29,6 +29,9 @@ public class Index {
     // value: 与词相关的文章列表(Weight)
     private HashMap<String , ArrayList<Weight>> invertedIndex = new HashMap<>();
 
+    private Object lock1 = new Object();
+    private Object lock2 = new Object();
+
 
     /**
      * 获取文档信息
@@ -114,20 +117,23 @@ public class Index {
 
         // 将上述结果汇总到map中。
         for (Map.Entry<String, WordCnt> entry : wordCntHashMap.entrySet()) {
-            String word = entry.getKey();
-            WordCnt wordCnt = entry.getValue();
-            Weight weight = new Weight();
-            weight.setDocId(doc.getDocId());
-            weight.setWeight((long)(wordCnt.titleCount * 10L + wordCnt.contentCount));
+            synchronized (lock2) {
+                String word = entry.getKey();
+                WordCnt wordCnt = entry.getValue();
+                Weight weight = new Weight();
+                weight.setDocId(doc.getDocId());
+                weight.setWeight((long)(wordCnt.titleCount * 10L + wordCnt.contentCount));
 
-            ArrayList<Weight> weights = invertedIndex.get(word);
-            if (Objects.isNull(weights)) {
-                ArrayList<Weight> list = new ArrayList<>();
-                list.add(weight);
-                invertedIndex.put(word, list);
-            } else {
-                weights.add(weight);
+                ArrayList<Weight> weights = invertedIndex.get(word);
+                if (Objects.isNull(weights)) {
+                    ArrayList<Weight> list = new ArrayList<>();
+                    list.add(weight);
+                    invertedIndex.put(word, list);
+                } else {
+                    weights.add(weight);
+                }
             }
+
         }
 
     }
@@ -141,7 +147,7 @@ public class Index {
      */
     private Doc buildForward(String title, String url, String content) {
         Doc doc = null;
-        synchronized (this) {
+        synchronized (lock1) {
             doc = new Doc(forwardIndex.size(), title, url, content);
             // 将文档放入正排索引中，
             forwardIndex.add(doc);
@@ -175,11 +181,17 @@ public class Index {
      * 反序列化
      * 把磁盘中的索引结构加载到内存里
      */
-    public void load() throws IOException {
+    public void load() throws IOException, InterruptedException {
         long start = System.currentTimeMillis();
         System.out.println("开始反序列化索引");
+
         File forwardIndexFile = new File(INDEX_PATH + "\\forward.txt");
         File invertedIndexFile = new File(INDEX_PATH + "\\inverted.txt");
+
+        if (!forwardIndexFile.exists() || !invertedIndexFile.exists()) {
+            Parser parser = new Parser();
+            parser.runConcurrent();
+        }
 
         // 开始加载
         forwardIndex = objectMapper.readValue(forwardIndexFile, new TypeReference<List<Doc>>() {});
@@ -187,5 +199,12 @@ public class Index {
         System.out.println("索引反序列化结束");
         long end = System.currentTimeMillis();
         System.out.println("索引反序列化消耗时间: " + (end - start) / 1000 + "s");
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        Index index = new Index();
+        index.load();
+        System.out.println("索引加载完毕");
+
     }
 }
