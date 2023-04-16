@@ -1,6 +1,5 @@
 spring:
   application: search
-  file:
-    path: "D:\\tools\\jdk-20_doc-all\\docs\\api"
+
 
 

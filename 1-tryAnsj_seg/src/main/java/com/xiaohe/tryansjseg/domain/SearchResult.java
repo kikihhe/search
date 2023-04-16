@@ -2,7 +2,7 @@ package com.xiaohe.tryansjseg.domain;
 
 
 
-public class Result {
+public class SearchResult {
     private String title;
 
     private String url;
@@ -10,11 +10,11 @@ public class Result {
     // 描述，从正文中提取
     private String description;
 
-    public Result() {
+    public SearchResult() {
 
     }
 
-    public Result(String title, String url, String description) {
+    public SearchResult(String title, String url, String description) {
         this.title = title;
         this.url = url;
         this.description = description;
@@ -22,7 +22,7 @@ public class Result {
 
     @Override
     public String toString() {
-        return "Result{" +
+        return "SearchResult{" +
                 "title='" + title + '\'' +
                 ", url='" + url + '\'' +
                 ", description='" + description + '\'' +

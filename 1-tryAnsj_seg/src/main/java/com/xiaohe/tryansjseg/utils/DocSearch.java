@@ -1,10 +1,11 @@
 package com.xiaohe.tryansjseg.utils;
 
 import com.xiaohe.tryansjseg.domain.Doc;
-import com.xiaohe.tryansjseg.domain.Result;
+import com.xiaohe.tryansjseg.domain.SearchResult;
 import com.xiaohe.tryansjseg.domain.Weight;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.Scanner;
  * @Description :
  * @date : 2023-04-13 19:53
  */
+@Component
 public class DocSearch {
 
     private static Index index = new Index();
@@ -59,7 +61,7 @@ public class DocSearch {
      * @param query
      * @return
      */
-    public List<Result> search(String query) {
+    public List<SearchResult> search(String query) {
         // 分词
         List<Term> terms = ToAnalysis.parse(query).getTerms();
 
@@ -87,17 +89,17 @@ public class DocSearch {
 
 
         // 查正排
-        List<Result> results = new ArrayList<>();
+        List<SearchResult> searchResults = new ArrayList<>();
         for (Weight weight : list) {
             int docId = weight.getDocId();
             Doc doc = index.getDoc(docId);
             // 根据正文生成摘要
             String description = generateDescription(doc.getContent(), terms);
 
-            results.add(new Result(doc.getTitle(), doc.getUrl(), description));
+            searchResults.add(new SearchResult(doc.getTitle(), doc.getUrl(), description));
 
         }
-        return results;
+        return searchResults;
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -106,9 +108,9 @@ public class DocSearch {
         Scanner scanner = new Scanner(System.in);
         System.out.print("请输入您想查询的内容: ");
         String text = scanner.next();
-        List<Result> results = search.search(text);
-        for (Result result : results) {
-            System.out.println(result);
+        List<SearchResult> searchResults = search.search(text);
+        for (SearchResult searchResult : searchResults) {
+            System.out.println(searchResult);
         }
     }
 }
