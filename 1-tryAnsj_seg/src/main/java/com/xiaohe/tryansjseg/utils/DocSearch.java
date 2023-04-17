@@ -5,13 +5,14 @@ import com.xiaohe.tryansjseg.domain.SearchResult;
 import com.xiaohe.tryansjseg.domain.Weight;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * @author : 小何
@@ -22,11 +23,15 @@ import java.util.Scanner;
 public class DocSearch {
 
     private static Index index = new Index();
+    private static final String STOP_WORDS_PATH = "D:\\JAVA-projects\\search\\stopWords" ;
+    private HashSet<String> stopWords = new HashSet<>();
 
 
     public DocSearch() throws IOException, InterruptedException {
         // 加载索引
         index.load();
+        // 加载暂停词表
+        loadStopWords();
     }
     public String generateDescription(String content, List<Term> terms) {
         // 去除普通标签和script标签
@@ -35,7 +40,7 @@ public class DocSearch {
         int pos = -1;
         for (Term term : terms) {
             String word = term.getName();
-            pos = content.toLowerCase(Locale.ROOT).indexOf(" " + word + " ");
+            pos = content.toLowerCase(Locale.ROOT).indexOf(word);
             if (pos >= 0) {
                 break;
             }
@@ -53,6 +58,12 @@ public class DocSearch {
         } else {
             result = content.substring(begin, begin + 160) + "...";
         }
+        for (Term term : terms) {
+            String word = term.getName();
+            // 全字匹配，不能把ArrayList中的List标红
+            // (?i): 表示不区分大小写
+            result = result.replaceAll("(?i) " + word + " ", "<i>" + word + "</i>");
+        }
         return result;
     }
 
@@ -63,11 +74,20 @@ public class DocSearch {
      */
     public List<SearchResult> search(String query) {
         // 分词
+        List<Term> oldTerms = ToAnalysis.parse(query).getTerms();
         List<Term> terms = ToAnalysis.parse(query).getTerms();
+        // 使用暂停词表过滤分词结果
+        for (Term term : oldTerms) {
+            if (!stopWords.contains(term.getName())) {
+                terms.add(term);
+            }
+        }
 
 
         // 查倒排
-        List<Weight> list = new ArrayList<>();
+
+        List<List<Weight>> termResult = new ArrayList<>();
+
         for (Term term : terms) {
             String word = term.getName();
             List<Weight> inverted = index.getInverted(word);
@@ -75,8 +95,15 @@ public class DocSearch {
             if (inverted == null || inverted.size() == 0) {
                 continue;
             }
-            list.addAll(inverted);
+            termResult.add(inverted);
         }
+        // 如果使用ArrayList查询，可能查出来一个文档既包含 array 又包含list, 那么他就会重复
+        // 一个Collections 计算的是 array的权重
+        // 另一个 Collections 计算的是 List 的权重
+        // 现在就要对这个文档去重、合并权重
+        List<Weight> list = mergeResult(termResult);
+
+
 
         // 根据权重排序
         list.sort((o1, o2) -> {
@@ -101,6 +128,87 @@ public class DocSearch {
 
         }
         return searchResults;
+    }
+
+    // 针对重复文档进行去重、权重合并
+    private List<Weight> mergeResult(List<List<Weight>> termResult) {
+        // 描述元素在二维数组中的位置
+        class Pos {
+            public int row;
+            public int col;
+
+            public Pos(int row, int col) {
+                this.row = row;
+                this.col = col;
+            }
+        }
+
+        // 1. 将每一行按照docID升序排序
+        for (List<Weight> list : termResult) {
+            list.sort(null);
+        }
+        // 2. 借助一个优先队列进行合并
+        List<Weight> result = new ArrayList<>();
+
+        PriorityQueue<Pos> queue = new PriorityQueue<>(new Comparator<Pos>() {
+            @Override
+            public int compare(Pos o1, Pos o2) {
+                // 根据pos纵坐标找到对应的List<Weight>, 再根据pos的横坐标找到对应的Weight
+                Weight weight1 = termResult.get(o1.row).get(o1.col);
+                Weight weight2 = termResult.get(o2.row).get(o2.col);
+                return weight1.getDocId() - weight2.getDocId();
+            }
+        });
+        // 把每一行的第一个元素插入
+        for (int i = 0; i < termResult.size(); i++) {
+            queue.offer(new Pos(i, 0));
+        }
+        while(!queue.isEmpty()) {
+            Pos pos = queue.poll();
+            Weight curWeight = termResult.get(pos.row).get(pos.col);
+            // 查看result中是否已经有这个weight, 如果没有直接插入
+            if (result.size() == 0) {
+                result.add(curWeight);
+            } else {
+                Weight lastWeight = result.get(result.size() - 1);
+                // 如果此docID已存在，直接将权重相加
+                if (lastWeight.getDocId() == curWeight.getDocId()) {
+                    lastWeight.setWeight(lastWeight.getWeight() +curWeight.getWeight());
+                } else {
+                    // 如果不存在，直接插入
+                    result.add(curWeight);
+                }
+            }
+            // 将下标移到这一行的下一个Weight
+            Pos newPos = new Pos(pos.row, pos.col+1);
+            if (newPos.col >= termResult.get(pos.row).size()) {
+                continue;
+            }
+            // 把新的pos加入堆
+            queue.offer(newPos);
+
+        }
+        return result;
+
+
+    }
+
+
+    // 加载停用词
+    public void loadStopWords() {
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(STOP_WORDS_PATH))) {
+            while (true) {
+                String fileLine = bufferedReader.readLine();
+                if (Strings.isEmpty(fileLine)) {
+                    return;
+                }
+                stopWords.add(fileLine);
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {

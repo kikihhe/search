@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,60 +20,42 @@ import java.util.concurrent.atomic.AtomicLong;
 @Component
 public class Parser {
     // 需要转换的文件名
-    private static final String FILE_PATH = "D:\\tools\\jdk-20_doc-all\\docs\\api";
+    private static final String FILE_PATH = "C:\\Users\\23825\\Desktop\\测试";
     private static final String PATH = "https://docs.oracle.com/javase/8/docs/api";
+    private static final List<String> FILE_TYPE = new ArrayList<>(Arrays.asList(".txt", ".html"));
 
     // 索引，
     private Index index = new Index();
 
-    // 计算读取HTML内容花费的时间
-    private AtomicLong time1 = new AtomicLong();
-    // 计算将文档加入索引库(正排/倒排索引)需要的时间
-    private AtomicLong time2 = new AtomicLong();
-
 
     public void run() throws IOException {
-        long start = System.currentTimeMillis();
-        System.out.println("开始解析");
-        // 加载api文件夹中的所有html文件
-        System.out.println("开始遍历文件");
-        long start2 = System.currentTimeMillis();
+
         ArrayList<File> files = new ArrayList<>();
         enumFile(FILE_PATH, files);
-        long end2 = System.currentTimeMillis();
-        System.out.println("文件遍历结束，花费时间: " + (end2 - start2));
         // 解析上述html文件
-
-        long start1 = System.currentTimeMillis();
-        System.out.println("开始制作索引");
         for (File file : files) {
-            System.out.println("开始解析: " + file.getAbsolutePath());
             parseHTML(file);
         }
-        long end1 = System.currentTimeMillis();
-        System.out.println("索引文件遍历结束，花费时间: " + (end1 - start1));
         // 存储
         index.save();
         long end = System.currentTimeMillis();
-        System.out.println("索引解析完毕，耗时: " + (end-start)/1000 + "s --->" + (end-start) + "ms");
-
     }
     /**
      * 多线程制作索引
      */
     public void runConcurrent() throws InterruptedException, IOException {
-        long start1 = System.currentTimeMillis();
+
 
         ArrayList<File> files = new ArrayList<>();
         // 读取索引
         enumFile(FILE_PATH, files);
-        System.out.println("开始多线程制作索引");
+
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CountDownLatch countDownLatch = new CountDownLatch(files.size());
         // 遍历文件，解析文件
         for (File file : files) {
             executorService.submit(() -> {
-                System.out.println("开始解析: " + file.getAbsolutePath());
+
                 parseHTML(file);
                 countDownLatch.countDown();
             });
@@ -81,15 +65,8 @@ public class Parser {
         // 终止线程
         executorService.shutdown();
 
-        long end1 = System.currentTimeMillis();
-        System.out.println("索引制作完毕，花费时间: " + (end1 - start1));
+
         index.save();
-
-
-        System.out.println("读取HTML文档中的Content花费时间: " + time1.get());
-        System.out.println("将文档加入(正、倒)索引所花费的时间: " + time2.get());
-
-
 
 
     }
@@ -139,19 +116,17 @@ public class Parser {
 
         // 转换html的URL, 加载出本地文件路径对应的在线文件路径
         String url = paresURL(file);
-        long start = System.nanoTime();
+
 
         // 解析HTML的正文
         String content = parseContentByRegex(file);
 
-        long mid = System.nanoTime();
+
         // 将这些title url content装入索引中。
         index.addDoc(title, url, content);
-        long end = System.nanoTime();
 
 
-        time1.addAndGet(mid - start);
-        time2.addAndGet(end - mid);
+
 
     }
 
@@ -173,6 +148,7 @@ public class Parser {
     // filePath: 路径
     // fileList: 将所有.html文件放入这个集合
     public void enumFile(String filePath, ArrayList<File> fileList) {
+
         File rootFile = new File(filePath);
         // 得到第一层所有的文件/文件夹
         File[] files = rootFile.listFiles();
@@ -185,11 +161,20 @@ public class Parser {
             } else {
                 // 如果是普通文件并且文件后缀为html，加入list, 如果不是，直接跳过
                 // 因为文件可能有.css文件
-                if (file.getAbsolutePath().endsWith(".html")){
+                String absolutePath = file.getAbsolutePath();
+                if (fileType(absolutePath)){
                     fileList.add(file);
                 }
             }
         }
+    }
+    public boolean fileType(String fileName) {
+        for (String filePrefix : FILE_TYPE) {
+            if (fileName.endsWith(filePrefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
