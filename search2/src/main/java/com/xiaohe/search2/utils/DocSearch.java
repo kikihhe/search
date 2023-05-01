@@ -5,6 +5,7 @@ import com.xiaohe.search2.domain.Doc;
 import com.xiaohe.search2.domain.SearchResult;
 import com.xiaohe.search2.domain.Weight;
 import org.ansj.domain.Term;
+import org.ansj.recognition.impl.StopRecognition;
 import org.ansj.splitWord.analysis.ToAnalysis;
 import org.apache.logging.log4j.util.Strings;
 
@@ -69,15 +70,21 @@ public class DocSearch {
      * @return
      */
     public List<String> participle(String content) {
-        List<Term> oldTerms = ToAnalysis.parse(content).getTerms();
+
+        // 加载停用分词
+        StopRecognition stopRecognition = new StopRecognition();
+        stopRecognition.insertStopWords(stopWords);
+
+        // 开始分词
+        List<Term> oldTerms = ToAnalysis.parse(content).recognition(stopRecognition).getTerms();
         List<String> words = new ArrayList<>();
 
-        // 使用暂停词表过滤分词结果
-        for (Term term : oldTerms) {
-            if (!stopWords.contains(term.getName())) {
-                words.add(term.getName());
-            }
-        }
+//        // 使用暂停词表过滤分词结果
+//        for (Term term : oldTerms) {
+//            if (!stopWords.contains(term.getName())) {
+//                words.add(term.getName());
+//            }
+//        }
         return words;
     }
 
