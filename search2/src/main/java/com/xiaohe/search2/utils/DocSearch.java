@@ -79,12 +79,12 @@ public class DocSearch {
         List<Term> oldTerms = ToAnalysis.parse(content).recognition(stopRecognition).getTerms();
         List<String> words = new ArrayList<>();
 
-//        // 使用暂停词表过滤分词结果
-//        for (Term term : oldTerms) {
-//            if (!stopWords.contains(term.getName())) {
-//                words.add(term.getName());
-//            }
-//        }
+        // 使用暂停词表过滤分词结果
+        for (Term term : oldTerms) {
+            if (!stopWords.contains(term.getName())) {
+                words.add(term.getName());
+            }
+        }
         return words;
     }
 
