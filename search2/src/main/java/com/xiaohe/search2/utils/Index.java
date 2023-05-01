@@ -1,13 +1,13 @@
-package com.xiaohe.tryansjseg.utils;
+package com.xiaohe.search2.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xiaohe.tryansjseg.domain.Doc;
-import com.xiaohe.tryansjseg.domain.Weight;
+
+import com.xiaohe.search2.domain.Doc;
+import com.xiaohe.search2.domain.Weight;
 import org.ansj.domain.Result;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +16,6 @@ import java.util.*;
 /**
  * 索引的各种操作
  */
-
 public class Index {
     private ObjectMapper objectMapper = new ObjectMapper();
     // 正排索引
@@ -164,6 +163,9 @@ public class Index {
         // 使用两个文件分别保存正排索引和倒排索引
         File indexPathFile = new File(INDEX_PATH);
         if (!indexPathFile.exists()) {
+            indexPathFile.mkdirs();
+        } else {
+            indexPathFile.delete();
             indexPathFile.mkdirs();
         }
 

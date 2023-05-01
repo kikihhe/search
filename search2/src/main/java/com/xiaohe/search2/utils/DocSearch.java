@@ -1,12 +1,12 @@
-package com.xiaohe.tryansjseg.utils;
+package com.xiaohe.search2.utils;
 
-import com.xiaohe.tryansjseg.domain.Doc;
-import com.xiaohe.tryansjseg.domain.SearchResult;
-import com.xiaohe.tryansjseg.domain.Weight;
+
+import com.xiaohe.search2.domain.Doc;
+import com.xiaohe.search2.domain.SearchResult;
+import com.xiaohe.search2.domain.Weight;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -18,7 +18,7 @@ import java.util.*;
  * @Description :
  * @date : 2023-04-13 19:53
  */
-@Component
+
 public class DocSearch {
 
     private static Index index = new Index();
@@ -32,13 +32,12 @@ public class DocSearch {
         // 加载暂停词表
         loadStopWords();
     }
-    public String generateDescription(String content, List<Term> terms) {
+    public String generateDescription(String content, List<String> terms) {
         // 去除普通标签和script标签
         content = content.replaceAll("<script.*?>(.*?)</script>", "");
         content = content.replaceAll("<.*?>", "");
         int pos = -1;
-        for (Term term : terms) {
-            String word = term.getName();
+        for (String word : terms) {
             pos = content.toLowerCase(Locale.ROOT).indexOf(word);
             if (pos >= 0) {
                 break;
@@ -49,16 +48,15 @@ public class DocSearch {
            return "";
         }
         // 从pos向前找60个字符
-        int begin = pos < 60 ? 0 : pos - 60;
+        int begin = pos < 10 ? 0 : pos - 10;
         String result = "";
 
-        if (begin + 160 > content.length()) {
+        if (begin + 10 > content.length()) {
             result = content.substring(begin);
         } else {
-            result = content.substring(begin, begin + 160) + "...";
+            result = content.substring(begin, begin + 10) + "...";
         }
-        for (Term term : terms) {
-            String word = term.getName();
+        for (String word : terms) {
             // 全字匹配，不能把ArrayList中的List标红
             // (?i): 表示不区分大小写
             result = result.replaceAll("(?i) " + word + " ", "<i>" + word + "</i>");
@@ -67,27 +65,30 @@ public class DocSearch {
     }
 
     /**
-     * // TODO 按照我的想法改一下搜索功能
-     * @param query
+     * 对查询的关键词进行分词
      * @return
      */
-    public List<SearchResult> search(String query) {
-        // 分词
-        List<Term> oldTerms = ToAnalysis.parse(query).getTerms();
-        List<Term> terms = ToAnalysis.parse(query).getTerms();
+    public List<String> participle(String content) {
+        List<Term> oldTerms = ToAnalysis.parse(content).getTerms();
+        List<String> words = new ArrayList<>();
 
         // 使用暂停词表过滤分词结果
         for (Term term : oldTerms) {
             if (!stopWords.contains(term.getName())) {
-                terms.add(term);
+                words.add(term.getName());
             }
         }
+        return words;
+    }
+
+    /**
+     * @param
+     * @return
+     */
+    public List<SearchResult> search(List<String> words) {
         // 查倒排
-
         List<List<Weight>> termResult = new ArrayList<>();
-
-        for (Term term : terms) {
-            String word = term.getName();
+        for (String word : words) {
             List<Weight> inverted = index.getInverted(word);
             // 如果这个词在所有文档中不存在
             if (inverted == null || inverted.size() == 0) {
@@ -120,7 +121,7 @@ public class DocSearch {
             int docId = weight.getDocId();
             Doc doc = index.getDoc(docId);
             // 根据正文生成摘要
-            String description = generateDescription(doc.getContent(), terms);
+            String description = generateDescription(doc.getContent(), words);
 
             searchResults.add(new SearchResult(doc.getTitle(), doc.getUrl(), description));
 
@@ -145,7 +146,7 @@ public class DocSearch {
 
         // 1. 将每一行按照docID升序排序
         for (List<Weight> list : termResult) {
-            list.sort(null);
+            Collections.sort(list);
         }
         // 2. 借助一个优先队列进行合并
         List<Weight> result = new ArrayList<>();
@@ -211,15 +212,5 @@ public class DocSearch {
 
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        DocSearch search = new DocSearch();
 
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("请输入您想查询的内容: ");
-        String text = scanner.next();
-        List<SearchResult> searchResults = search.search(text);
-        for (SearchResult searchResult : searchResults) {
-            System.out.println(searchResult);
-        }
-    }
 }

@@ -1,9 +1,7 @@
-package com.xiaohe.tryansjseg.domain;
+package com.xiaohe.search2.domain;
 
 
 import lombok.Data;
-
-import java.util.List;
 
 @Data
 public class SearchResult {

@@ -13,6 +13,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>1-tryAnsj_seg</name>
     <description>1-tryAnsj_seg</description>
+    <packaging>jar</packaging>
 
     <properties>
         <java.version>1.8</java.version>
@@ -46,10 +47,19 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
+        <!-- 上传文件 -->
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+
 
     </dependencies>
 
+
     <build>
+        <finalName>search</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

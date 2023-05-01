@@ -1,5 +1,14 @@
 spring:
   application: search
+  servlet:
+    multipart:
+#      设置最大文件容量
+      max-file-size: 500MB
+      max-request-size: 500MB
+    context-path: /api
+server: 8080
+  spring：
+
 
 
 
