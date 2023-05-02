@@ -33,34 +33,39 @@ public class DocSearch {
         // 加载暂停词表
         loadStopWords();
     }
-    public String generateDescription(String content, List<String> terms) {
+    public List<String> generateDescription(String content, List<String> terms) {
+        // 返回结果
+        List<String> result = new ArrayList<>();
+
         // 去除普通标签和script标签
         content = content.replaceAll("<script.*?>(.*?)</script>", "");
         content = content.replaceAll("<.*?>", "");
-        int pos = -1;
-        for (String word : terms) {
-            pos = content.toLowerCase(Locale.ROOT).indexOf(word);
-            if (pos >= 0) {
-                break;
+        int pos = 0;
+        while (pos < content.length()) {
+            for (String word : terms) {
+                pos = content.toLowerCase(Locale.ROOT).indexOf(word, pos);
+                if (pos >= 0) {
+                    break;
+                }
             }
-        }
-        // 遍历完也没有找到, 所有分词结果都没有
-        if (pos == -1) {
-           return "";
-        }
-        // 从pos向前找60个字符
-        int begin = pos < 10 ? 0 : pos - 10;
-        String result = "";
-
-        if (begin + 10 > content.length()) {
-            result = content.substring(begin);
-        } else {
-            result = content.substring(begin, begin + 10) + "...";
-        }
-        for (String word : terms) {
-            // 全字匹配，不能把ArrayList中的List标红
-            // (?i): 表示不区分大小写
-            result = result.replaceAll("(?i) " + word + " ", "<i>" + word + "</i>");
+            // 遍历完也没有找到, 所有分词结果都没有
+            if (pos == -1) {
+               return result;
+            }
+            // 从pos向前找10个字符
+            int begin = pos < 10 ? 0 : pos - 10;
+            String resultString = "";
+            if (begin + 10 > content.length()) {
+                resultString = content.substring(begin);
+            } else {
+                resultString = content.substring(begin, begin + 10);
+            }
+            for (String word : terms) {
+                // 全字匹配，不能把ArrayList中的List标红
+                // (?i): 表示不区分大小写
+                resultString = resultString.replaceAll("(?i) " + word + " ", "<i>" + word + "</i>");
+            }
+            result.add(resultString);
         }
         return result;
     }
@@ -88,10 +93,7 @@ public class DocSearch {
         return words;
     }
 
-    /**
-     * @param
-     * @return
-     */
+
     public List<SearchResult> search(List<String> words) {
         // 查倒排
         List<List<Weight>> termResult = new ArrayList<>();
@@ -108,9 +110,6 @@ public class DocSearch {
         // 另一个 Collections 计算的是 List 的权重
         // 现在就要对这个文档去重、合并权重
         List<Weight> list = mergeResult(termResult);
-
-
-
         // 根据权重排序
         list.sort((o1, o2) -> {
             if ((o2.getWeight() > o1.getWeight())) {
@@ -119,22 +118,17 @@ public class DocSearch {
                 return 0;
             }
         });
-
-
-
         // 查正排
         List<SearchResult> searchResults = new ArrayList<>();
         for (Weight weight : list) {
             int docId = weight.getDocId();
             Doc doc = index.getDoc(docId);
             // 根据正文生成摘要
-            String description = generateDescription(doc.getContent(), words);
+            List<String> description = generateDescription(doc.getContent(), words);
 
             searchResults.add(new SearchResult(doc.getTitle(), doc.getUrl(), description));
 
         }
-
-
         return searchResults;
     }
 
@@ -144,13 +138,11 @@ public class DocSearch {
         class Pos {
             public int row;
             public int col;
-
             public Pos(int row, int col) {
                 this.row = row;
                 this.col = col;
             }
         }
-
         // 1. 将每一行按照docID升序排序
         for (List<Weight> list : termResult) {
             Collections.sort(list);
@@ -194,13 +186,9 @@ public class DocSearch {
             }
             // 把新的pos加入堆
             queue.offer(newPos);
-
         }
         return result;
-
-
     }
-
 
     // 加载停用词
     public void loadStopWords() {
@@ -211,13 +199,9 @@ public class DocSearch {
                     return;
                 }
                 stopWords.add(fileLine);
-
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
-
-
 }
