@@ -10,9 +10,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,18 +43,21 @@ public class Parser {
     /**
      * 多线程制作索引
      */
-    public void runConcurrent(List<File> files) throws InterruptedException, IOException {
+    public void runConcurrent(Map<String, File> map) throws InterruptedException, IOException {
 
         ExecutorService executorService = Executors.newFixedThreadPool(5);
-        CountDownLatch countDownLatch = new CountDownLatch(files.size());
+        CountDownLatch countDownLatch = new CountDownLatch(map.size());
         // 遍历文件，解析文件
-        for (File file : files) {
-            executorService.submit(() -> {
-                parseHTML(file);
-                countDownLatch.countDown();
+
+            map.forEach((filePath, file) -> {
+                executorService.submit(() -> {
+                    parseHTML(filePath, file);
+                    countDownLatch.countDown();
+                });
             });
 
-        }
+
+
         countDownLatch.await();
         // 终止线程
         executorService.shutdown();
@@ -102,22 +103,19 @@ public class Parser {
 
 
     // 解析html文件
-    private void parseHTML(File file)  {
+    private void parseHTML(String filePath, File file)  {
         // 解析html的标题
         String title = parseTitle(file);
 
         //将本地的url作为文件的url
-        String url = file.getAbsolutePath();
+        String url = filePath;
 
 
         // 解析HTML的正文
         String content = parseContentByRegex(file);
 
-
         // 将这些title url content装入索引中。
         index.addDoc(title, url, content);
-
-
 
 
     }
@@ -130,10 +128,5 @@ public class Parser {
         return fileName.substring(0, i);
     }
 //
-    public static File multipartFileToFile(MultipartFile mfile) throws IOException {
-        File file = new File(mfile.getOriginalFilename());
-        FileUtils.copyInputStreamToFile(mfile.getInputStream(), file);
-        return file;
-    }
 
 }

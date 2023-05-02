@@ -40,10 +40,12 @@ public class DocSearch {
         // 去除普通标签和script标签
         content = content.replaceAll("<script.*?>(.*?)</script>", "");
         content = content.replaceAll("<.*?>", "");
-        int pos = 0;
+        int pos = -1;
         while (pos < content.length()) {
+            String w = "";
             for (String word : terms) {
-                pos = content.toLowerCase(Locale.ROOT).indexOf(word, pos);
+                w = word;
+                pos = content.toLowerCase(Locale.ROOT).indexOf(word, pos+1);
                 if (pos >= 0) {
                     break;
                 }
@@ -54,16 +56,15 @@ public class DocSearch {
             }
             // 从pos向前找10个字符
             int begin = pos < 10 ? 0 : pos - 10;
+            int end = Math.min(pos + w.length() + 10, content.length());
             String resultString = "";
-            if (begin + 10 > content.length()) {
-                resultString = content.substring(begin);
-            } else {
-                resultString = content.substring(begin, begin + 10);
-            }
+
+            resultString = content.substring(begin, end);
+
             for (String word : terms) {
                 // 全字匹配，不能把ArrayList中的List标红
                 // (?i): 表示不区分大小写
-                resultString = resultString.replaceAll("(?i) " + word + " ", "<i>" + word + "</i>");
+                resultString = resultString.replaceAll(word, "<i>" + word + "</i>");
             }
             result.add(resultString);
         }
@@ -84,16 +85,22 @@ public class DocSearch {
         List<Term> oldTerms = ToAnalysis.parse(content).recognition(stopRecognition).getTerms();
         List<String> words = new ArrayList<>();
 
-        // 使用暂停词表过滤分词结果
-        for (Term term : oldTerms) {
-            if (!stopWords.contains(term.getName())) {
-                words.add(term.getName());
-            }
-        }
+//        // 使用暂停词表过滤分词结果
+//        for (Term term : oldTerms) {
+//            if (!stopWords.contains(term.getName())) {
+//                words.add(term.getName());
+//            }
+//        }
+        oldTerms.forEach(item -> {
+            words.add(item.getName());
+        });
         return words;
     }
 
-
+    /**
+     * @param
+     * @return
+     */
     public List<SearchResult> search(List<String> words) {
         // 查倒排
         List<List<Weight>> termResult = new ArrayList<>();
@@ -192,6 +199,7 @@ public class DocSearch {
 
     // 加载停用词
     public void loadStopWords() {
+        stopWords.add(" ");
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(STOP_WORDS_PATH))) {
             while (true) {
                 String fileLine = bufferedReader.readLine();
@@ -204,4 +212,5 @@ public class DocSearch {
             e.printStackTrace();
         }
     }
+
 }

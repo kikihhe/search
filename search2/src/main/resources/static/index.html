@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="./jquney.js">
+    
+  </script>
+  <title>Document</title>
+
+</head>
+ <style>
+#folder{
+
+
+        font-size: 20px;
+        border: 2px solid #4e6ef2;
+        border-radius:10px;
+        width: 15%;
+
+}
+
+
+#submit{
+ 
+
+}
+
+ </style>
+
+<body>
+  <!--  -->
+  <!-- <form id="myform" action="http://192.168.50.63:8080/api/uploadFile" method="POST" enctype="multipart/form-data"  target="myIframe">
+    <input id="folder" type="file"  webkitdirectory />
+    <input id="submit"  type="submit" value="上传文件夹"/>
+  </form>
+  <iframe name="myIframe" style="display:none"></iframe>
+
+
+  -->
+
+  <input type='file' webkitdirectory  value="123">  
+  <button id="upload-btn" type="button">upload</button>   
+
+
+  <script>
+  
+
+  var files = [];
+$(document).ready(function(){
+  $("input").change(function(){
+    console.log(this.value);
+    console.log(this.files);
+    files = this.files;
+  });
+});
+$("#upload-btn").click(function(){
+  var fd = new FormData();
+  for (var i = 0; i < files.length; i++) {
+    fd.append("file", files[i]);
+    console.log(fd);
+  }
+  $.ajax({
+    url: "http://192.168.50.63:8080/api/uploadFile",
+    method: "POST",
+    data: fd,
+    contentType: false,
+    processData: false,
+    cache: false,
+    success: function(data){
+      console.log(data);
+    }
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // var btn1 = document.querySelector("#hello")
+  
+
+
+
+
+
+
+    // var btn2 = document.querySelector("#submit")
+    // btn2.onclick=function(){
+    //  window.location.href='./test.html'
+    // }
+
+
+  
+
+
+    
+    
+    // btn.onclick = function ()
+    // { console.log("我被点了");
+    //   const fd = new FormData(document.querySelector("#myform"))
+      
+    
+
+    //   axios.post('http://192.168.50.63:8080/api/uploadFile', {
+    //     data: fd
+    //   }).then((res) =>
+    //   {
+    //     console.log(res);
+    //   })
+    //   console.log(fd);
+    // }
+
+
+
+  </script>
+</body>
+
+</html>

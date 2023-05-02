@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <title>Document</title>
+</head>
+<style>
+  * {
+    margin: 0px;
+
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #fffef9;
+  }
+
+  .nva input {
+
+    outline: none;
+    font-size: 20px;
+    border: 2px solid #4e6ef2;
+    border-radius: 10px;
+    width: 30%;
+    height: 30px;
+    position: relative;
+    top: 5px;
+
+
+  }
+
+  button {
+    position: relative;
+    outline: none;
+    font-size: 10px;
+    border-radius: 5px;
+    border-color: #6f60aa;
+    color: white;
+    background: #9b95c9;
+    width: 8%;
+    height: 30px;
+    top: -5%;
+    left: 2%;
+  }
+
+  table {
+    position: relative;
+    top: 20%;
+    left: 2%;
+  }
+
+  .nva {
+    margin-top: 14%;
+    background-color: #d5d4da;
+  }
+
+  .nva img {
+
+    width: 70px;
+    height: 50px;
+    margin-left: 30px;
+    margin-top: 20px;
+  }
+
+  .content img {
+    width: 120px;
+    height: 100px;
+  }
+
+  .classfiy {
+    list-style: none;
+    display: flex;
+    position: absolute;
+    top: 10px;
+    left: 49px;
+
+
+  }
+
+  .classfiy li {
+    margin-left: 20px;
+  }
+
+  .res {
+    padding-left: 10px;
+    line-height: 30px;
+    height: 30px;
+    margin-left: 30px;
+    font-size: 17px;
+    background-color: #b9b9b8cc;
+  }
+
+  .content {
+
+    background-color: rgb(244, 245, 245);
+    padding-left: 30px;
+    margin-top: 30px;
+  }
+
+  span {
+    font-size: 17px;
+    color: #8a8985;
+    position: relative;
+    right: 30%;
+    top: -15px;
+    width: 40px;
+  }
+
+  .content-imgtext {
+    display: flex;
+    ;
+  }
+
+  .test {
+    width: 45%;
+    margin-left: 40px;
+    font-size: 20px;
+    ;
+  }
+  .test1 {
+    width: 45%;
+    margin-left: 40px;
+    font-size: 20px;
+    ;
+  }
+</style>
+
+<body>
+
+    <div class="nva">
+
+      <!-- <img src="./img/menu_pic.png" width="100px" height="60%"> -->
+      <input type="text" name="search" value="">
+      <span></span>
+      <button>搜索</button>
+      <p class="res">
+        结果：关于"html"的内容总共有xx个
+      </p>
+      
+
+    </div>
+
+
+
+  <hr>
+  <div class="content">
+
+    <div class="content-imgtext">
+      <!-- <img src="./img/menu_pic.png" alt=""> -->
+      <p class="test"> </p>
+      <br>
+      <p class="test1"> </p>
+    </div>
+  </div>
+  <script>
+    var search = document.querySelector(".nva input")
+
+
+    var button = document.querySelector(".nva button")
+    var fenci = document.querySelector(".test")
+    var fenci1 = document.querySelector(".test1")
+    button.onclick = function ()
+    {  
+   alert("124")
+    
+      axios.get(`http://192.168.50.63:8080/api/search?content=${search.value}`).then((res) =>
+      { 
+         fenci.innerHTML =JSON.stringify(res.data.data.查询结果) 
+         fenci1.innerHTML=JSON.stringify(res.data.data.分词结果) 
+      })
+    
+       
+    }
+  </script>
+</body>
+
+</html>

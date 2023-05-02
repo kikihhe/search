@@ -2,19 +2,15 @@ package com.xiaohe.search2.controller;
 
 import com.xiaohe.search2.domain.SearchResult;
 import com.xiaohe.search2.utils.DocSearch;
+import com.xiaohe.search2.utils.FileUtils;
 import com.xiaohe.search2.utils.Parser;
 import com.xiaohe.search2.utils.ReturnResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @RestController
@@ -22,27 +18,31 @@ import java.util.Map;
 @RequestMapping("/api")
 public class SearchController {
     @PostMapping("/uploadFile")
-    public ReturnResult uploadFile(HttpServletRequest request) throws IOException, InterruptedException {
-        MultipartHttpServletRequest multipartHttpServletRequest = (MultipartHttpServletRequest) request;
-        List<MultipartFile> file = multipartHttpServletRequest.getFiles("file");
-
-
-        List<File> files = new ArrayList<>();
-        for (MultipartFile file1: file) {
-            File e = Parser.multipartFileToFile(file1);
-            files.add(e);
+    public ReturnResult uploadDate(HttpServletRequest request) throws IllegalStateException, IOException, InterruptedException {
+        Map<String, File> files = FileUtils.getFilesFromRequest(request);
+        files.forEach((filePath, file) -> {
+            System.out.println(filePath + "\t" + file);
+        });
+        if (Objects.isNull(files) || files.size() == 0) {
+            return ReturnResult.error("请上传有效文件!");
         }
         Parser parser = new Parser();
         parser.runConcurrent(files);
 
         // 将文件夹中的文件删除
-        for (File file1 : files) {
-            if (file1.exists()) {
-                file1.delete();
-            }
+        List<File> fileList = new ArrayList<>();
+        files.forEach((filePath, file) -> {
+            fileList.add(file);
+        });
+        for (File file : fileList) {
+            file.deleteOnExit();
         }
-        return ReturnResult.success("成功");
+        return ReturnResult.success("成功创建索引");
     }
+
+
+
+
 
 
 
@@ -50,14 +50,13 @@ public class SearchController {
     @ResponseBody
     @GetMapping("/search")
     public ReturnResult search(String content) throws IOException, InterruptedException {
-        System.out.println(content);
         DocSearch docSearch = new DocSearch();
         // 对content进行分词
         List<String> participle = docSearch.participle(content);
-        System.out.println(participle);
-        // 对分词结果展示
+        // 对分词结果查询
         List<SearchResult> search = docSearch.search(participle);
-        System.out.println(search);
+
+        // 返回结果
         Map<String, Object> map = new HashMap<>();
         map.put("分词结果", participle);
         map.put("查询结果", search);
